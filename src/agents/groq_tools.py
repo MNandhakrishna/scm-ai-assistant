@@ -97,23 +97,12 @@ TOOLS = [
         "function": {
             "name": "restock_recommendations",
             "description": (
-                "Get current products requiring replenishment and "
-                "their recommended order quantities."
+                "Get the current products that require restocking "
+                "and their recommended order quantities."
             ),
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "safety_stock_days": {
-                        "type": "integer",
-                        "description": (
-                            "Number of demand days used as safety stock."
-                        ),
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of recommendations.",
-                    },
-                },
+                "properties": {},
                 "required": [],
             },
         },
@@ -139,3 +128,18 @@ TOOL_FUNCTIONS = {
     "demand_summary": demand_summary,
     "restock_recommendations": restock_recommendations,
 }
+
+INVENTORY_TOOLS = [
+    TOOLS[0],
+    TOOLS[1],
+]
+
+DEMAND_TOOLS = [
+    TOOLS[2],
+    TOOLS[3],
+    TOOLS[4],
+]
+
+RESTOCK_TOOLS = [
+    TOOLS[5],
+]

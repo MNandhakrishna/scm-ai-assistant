@@ -119,6 +119,7 @@ def call_model(state: AgentState):
         tools=TOOLS,
         tool_choice="auto",
         temperature=0,
+        
     )
 
     assistant_message = response.choices[0].message
@@ -129,12 +130,23 @@ def call_model(state: AgentState):
 
         for tool_call in assistant_message.tool_calls:
 
+            arguments = tool_call.function.arguments
+
+            if arguments:
+                try:
+                    parsed_arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    parsed_arguments = {}
+            else:
+                parsed_arguments = {}
+
+            if not isinstance(parsed_arguments, dict):
+                parsed_arguments = {}
+
             tool_calls.append(
                 {
                     "name": tool_call.function.name,
-                    "args": json.loads(
-                        tool_call.function.arguments
-                    ),
+                    "args": parsed_arguments,
                     "id": tool_call.id,
                 }
             )

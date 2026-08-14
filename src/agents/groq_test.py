@@ -3,28 +3,33 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
+from src.agents.groq_tools import RESTOCK_TOOLS
 
 load_dotenv()
 
-api_key = os.getenv("GROQ_API_KEY")
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
 
-if not api_key:
-    raise ValueError("GROQ_API_KEY was not found in the .env file")
-
-
-client = Groq(api_key=api_key)
-
+print("Number of tools:", len(RESTOCK_TOOLS))
+print("Tool JSON size:", len(str(RESTOCK_TOOLS)))
 
 response = client.chat.completions.create(
     model="llama-3.1-8b-instant",
     messages=[
         {
+            "role": "system",
+            "content": "You are an SCM assistant."
+        },
+        {
             "role": "user",
-            "content": "Explain supply chain management in one sentence."
+            "content": "Which products currently need restocking?"
         }
     ],
-    temperature=0
+    tools=RESTOCK_TOOLS,
+    tool_choice="auto",
+    temperature=0,
+    max_completion_tokens=300,
 )
 
-
-print(response.choices[0].message.content)
+print(response.choices[0].message)

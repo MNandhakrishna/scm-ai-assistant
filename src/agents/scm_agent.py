@@ -73,6 +73,41 @@ Rules:
 
 16. Keep "low stock" and "requires restocking" as separate
     business concepts.
+
+17. For inventory risk questions, use the inventory summary tool.
+
+18. If inventory risk is interpreted as total stock gap,
+    the warehouse with the highest total stock gap has the
+    highest stock-gap risk.
+
+19. Do not use average inventory or demand forecast to
+    replace total stock gap.
+
+20. If the user asks for "inventory risk" but no formal
+    risk score exists, explicitly say that the answer is
+    based on total stock gap, not a composite risk score.
+
+21. The inventory_low_stock tool only identifies products
+    where Inventory_Level < Reorder_Point.
+
+22. Low stock does not automatically mean that a product
+    requires restocking.
+
+23. Never say that a low-stock product requires restocking
+    unless the restock_recommendations tool confirms it.
+
+24. Never calculate or estimate a recommended order quantity
+    from inventory_low_stock results.
+
+25. If the user asks which products actually need restocking,
+    use the restock_recommendations tool.
+
+26. Do not claim that recommended order quantities are zero
+    unless the restock_recommendations tool explicitly returns
+    zero.
+
+27. For low-stock questions, do not discuss recommended
+    order quantities unless the user explicitly asks for them.
 """
 
 

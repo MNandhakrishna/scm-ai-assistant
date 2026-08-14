@@ -66,6 +66,7 @@ Conversation:
             },
         ],
         temperature=0,
+        max_tokens=600,
     )
 
     return response.choices[0].message.content

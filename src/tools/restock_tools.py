@@ -116,3 +116,19 @@ def get_restock_recommendations(
     connection.close()
 
     return result
+
+if __name__ == "__main__":
+
+    print("=== RESTOCK RECOMMENDATIONS ===")
+
+    recommendations = get_restock_recommendations(
+        safety_stock_days=2,
+        limit=20
+    )
+
+    if recommendations.empty:
+        print("No products currently require restocking.")
+    else:
+        print(
+            recommendations.to_string(index=False)
+        )

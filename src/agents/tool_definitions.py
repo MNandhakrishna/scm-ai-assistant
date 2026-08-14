@@ -19,8 +19,17 @@ def inventory_low_stock(limit: int = 10):
 
     result = get_current_low_stock(limit=limit)
 
-    return result.to_dict(orient="records")
-
+    return {
+        "analysis_type": "LOW_STOCK_ONLY",
+        "restocking_confirmed": False,
+        "message": (
+            "These products are below their reorder points. "
+            "This identifies low-stock conditions only. "
+            "It does not confirm that they require restocking "
+            "and does not provide recommended order quantities."
+        ),
+        "products": result.to_dict(orient="records"),
+    }
 
 def inventory_summary():
     """Return the current inventory summary by warehouse."""
@@ -88,4 +97,12 @@ def restock_recommendations(
 
     result = result[columns]
 
-    return result.to_dict(orient="records")
+    return {
+        "analysis_type": "RESTOCK_RECOMMENDATIONS",
+        "restocking_confirmed": True,
+        "description": (
+            "These products have positive recommended "
+            "order quantities and require replenishment."
+        ),
+        "products": result.to_dict(orient="records"),
+    }

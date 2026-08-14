@@ -1,7 +1,8 @@
 import json
 import os
 from typing import Annotated
-
+from src.schemas.response_builder import build_response_from_tool
+build_response_from_tool
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -245,6 +246,8 @@ def call_model(state: AgentState):
         ]
     }
 
+
+
 def execute_tools(state: AgentState):
     """
     Execute the tools requested by the LLM.
@@ -259,20 +262,76 @@ def execute_tools(state: AgentState):
         function_name = tool_call["name"]
         arguments = tool_call["args"]
 
+        logger.info(
+            "Executing SCM tool: %s with arguments: %s",
+            function_name,
+            arguments,
+        )
+
+        # Check whether the requested tool exists
         if function_name not in TOOL_FUNCTIONS:
+
+            logger.error(
+                "Unknown tool requested: %s",
+                function_name,
+            )
+
             result = {
                 "error": f"Unknown tool: {function_name}"
             }
 
         else:
+
+            # Get the actual Python function
             function = TOOL_FUNCTIONS[function_name]
-            result = function(**arguments)
+
+            try:
+
+                # Execute the tool
+                result = function(**arguments)
+
+                logger.info(
+                    "Tool executed successfully: %s",
+                    function_name,
+                )
+
+                # Build structured response if available
+                structured_response = build_response_from_tool(
+                    function_name,
+                    result,
+                )
+
+                if structured_response:
+
+                    logger.info(
+                        "Structured response created for tool: %s",
+                        function_name,
+                    )
+
+                    logger.info(
+                        "Response type: %s",
+                        structured_response.answer_type,
+                    )
+
+            except Exception as exc:
+
+                logger.exception(
+                    "Tool execution failed: %s",
+                    function_name,
+                )
+
+                result = {
+                    "error": (
+                        f"Tool '{function_name}' failed: "
+                        f"{str(exc)}"
+                    )
+                }
 
         tool_messages.append(
             ToolMessage(
                 content=json.dumps(
                     result,
-                    default=str
+                    default=str,
                 ),
                 tool_call_id=tool_call["id"],
             )

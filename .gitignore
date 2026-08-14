@@ -1,0 +1,27 @@
+# Environment
+.env
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE
+.vscode/
+
+# Local audio files
+data/*.m4a
+data/*.wav
+data/*.mp3
+
+# Local databases
+*.duckdb
+*.db
+
+# Dataset
+data/supply_chain_dataset.csv
+
+# OS
+.DS_Store
+Thumbs.db

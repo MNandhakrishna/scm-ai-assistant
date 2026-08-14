@@ -64,11 +64,9 @@ def get_restock_recommendations(
         recommendations AS (
             SELECT
                 *,
-                CEIL(
-                    GREATEST(
-                        Required_Inventory - Inventory_Level,
-                        0
-                    )
+                GREATEST(
+                    Required_Inventory - Inventory_Level,
+                    0
                 ) AS Recommended_Order_Quantity
 
             FROM calculations

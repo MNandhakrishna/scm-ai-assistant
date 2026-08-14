@@ -1,27 +1,26 @@
-# Environment
+# Environment variables
 .env
-venv/
 
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
 
+# Virtual environments
+venv/
+.venv/
+
+# Streamlit
+.streamlit/
+
 # IDE
 .vscode/
-
-# Local audio files
-data/*.m4a
-data/*.wav
-data/*.mp3
-
-# Local databases
-*.duckdb
-*.db
-
-# Dataset
-data/supply_chain_dataset.csv
+.idea/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

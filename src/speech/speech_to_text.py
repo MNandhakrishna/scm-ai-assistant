@@ -4,6 +4,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 from groq import Groq
 
+from src.utils.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 load_dotenv()
 
@@ -23,19 +28,44 @@ def transcribe_audio(audio_file):
     audio_path = Path(audio_file)
 
     if not audio_path.exists():
+
+        logger.error(
+            "Audio file not found: %s",
+            audio_path,
+        )
+
         raise FileNotFoundError(
             f"Audio file not found: {audio_path}"
         )
 
-    with open(audio_path, "rb") as file:
+    logger.info(
+        "Starting audio transcription: %s",
+        audio_path.name,
+    )
 
-        transcription = client.audio.transcriptions.create(
-            file=file,
-            model="whisper-large-v3-turbo",
-            response_format="json",
+    try:
+
+        with open(audio_path, "rb") as file:
+
+            transcription = client.audio.transcriptions.create(
+                file=file,
+                model="whisper-large-v3-turbo",
+                response_format="json",
+            )
+
+        logger.info(
+            "Audio transcription completed successfully"
         )
 
-    return transcription.text
+        return transcription.text
+
+    except Exception:
+
+        logger.exception(
+            "Audio transcription failed"
+        )
+
+        raise
 
 
 if __name__ == "__main__":

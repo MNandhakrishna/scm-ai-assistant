@@ -3,13 +3,15 @@ import os
 from typing import Annotated
 
 from dotenv import load_dotenv
-from groq import Groq
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
 from typing_extensions import TypedDict
-
+from groq import Groq, APIStatusError
 from src.agents.groq_tools import TOOLS, TOOL_FUNCTIONS
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 load_dotenv()
@@ -67,6 +69,10 @@ def call_model(state: AgentState):
         }
     ]
 
+    # -----------------------------------------------------
+    # Convert LangChain messages to Groq message format
+    # -----------------------------------------------------
+
     for message in state["messages"]:
 
         if isinstance(message, HumanMessage):
@@ -113,14 +119,65 @@ def call_model(state: AgentState):
                 }
             )
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        tools=TOOLS,
-        tool_choice="auto",
-        temperature=0,
-        
-    )
+    # -----------------------------------------------------
+    # Call Groq with error handling
+    # -----------------------------------------------------
+
+    try:
+
+        logger.info(
+            "Calling Groq model: %s",
+            MODEL,
+        )
+
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            tools=TOOLS,
+            tool_choice="auto",
+            temperature=0,
+            max_tokens=800,
+        )
+
+        logger.info(
+            "Groq response received successfully"
+        )
+
+    except APIStatusError as exc:
+
+        logger.error(
+            "Groq API error: status=%s, message=%s",
+            exc.status_code,
+            str(exc),
+        )
+
+        if exc.status_code == 413:
+
+            raise RuntimeError(
+                "The SCM request is too large for the current "
+                "Groq usage limit. Please ask a shorter question "
+                "or reduce the amount of data requested."
+            ) from exc
+
+        raise RuntimeError(
+            "The SCM AI service returned an API error. "
+            "Please try again."
+        ) from exc
+
+    except Exception as exc:
+
+        logger.exception(
+            "Unexpected Groq error: %s",
+            exc,
+        )
+
+        raise RuntimeError(
+            "The SCM AI service could not process the request."
+        ) from exc
+
+    # -----------------------------------------------------
+    # Process Groq response
+    # -----------------------------------------------------
 
     assistant_message = response.choices[0].message
 
@@ -130,17 +187,45 @@ def call_model(state: AgentState):
 
         for tool_call in assistant_message.tool_calls:
 
-            arguments = tool_call.function.arguments
+            raw_arguments = tool_call.function.arguments
 
-            if arguments:
+            logger.info(
+                "Raw tool arguments for %s: %r",
+                tool_call.function.name,
+                raw_arguments,
+            )
+
+            if raw_arguments:
+
                 try:
-                    parsed_arguments = json.loads(arguments)
+                    parsed_arguments = json.loads(raw_arguments)
+
                 except json.JSONDecodeError:
+
+                    logger.error(
+                        "Invalid JSON tool arguments for %s: %s",
+                        tool_call.function.name,
+                        raw_arguments,
+                    )
+
                     parsed_arguments = {}
+
             else:
+
                 parsed_arguments = {}
 
+            # Groq may return "null", which json.loads()
+            # converts to Python None. LangChain requires
+            # tool_call args to always be a dictionary.
             if not isinstance(parsed_arguments, dict):
+
+                logger.warning(
+                    "Tool arguments were not a dictionary for %s. "
+                    "Using empty arguments instead. Received: %r",
+                    tool_call.function.name,
+                    parsed_arguments,
+                )
+
                 parsed_arguments = {}
 
             tool_calls.append(
@@ -159,7 +244,6 @@ def call_model(state: AgentState):
             )
         ]
     }
-
 
 def execute_tools(state: AgentState):
     """
@@ -181,9 +265,7 @@ def execute_tools(state: AgentState):
             }
 
         else:
-
             function = TOOL_FUNCTIONS[function_name]
-
             result = function(**arguments)
 
         tool_messages.append(

@@ -1,1 +1,8 @@
-pip install pandas
+pandas
+duckdb
+python-dotenv
+groq
+langgraph
+langchain-core
+streamlit
+pytest
